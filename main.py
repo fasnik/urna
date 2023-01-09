@@ -8,17 +8,16 @@ from PySide2.QtGui import QGuiApplication
 from PySide2.QtQml import QQmlApplicationEngine
 from PySide2.QtCore import QObject, Slot, Signal
 from PySide2.QtQuickControls2 import QQuickStyle
-# from PySide6.QtQml import QmlElement
 
 from pygame import mixer
 
 def ProcessaVoto(chapa):
     global conn
-#    with conn:
-    sql = "INSERT INTO votacao(voto) VALUES(?)"
-    cur = conn.cursor()
-    cur.execute(sql, chapa)
-    conn.commit()
+    with conn:
+        sql = "INSERT INTO votacao(voto) VALUES(?)"
+        cur = conn.cursor()
+        cur.execute(sql, chapa)
+        conn.commit()
 
 
 class BackEnd(QObject):
@@ -27,6 +26,7 @@ class BackEnd(QObject):
         self.voto_atual = None
 
     sendChapa = Signal(str)
+    isVoteValid = Signal(bool)
 
     @Slot()
     def getConfirma(self):
@@ -35,7 +35,11 @@ class BackEnd(QObject):
             mixer.music.play()
             self.voto_atual = None
             print("terminou o voto")
-            self.sendChapa.emit("Use os botoes ao lado para escolhera chapa. Observe se a chapa  selecionada esta sendo exibida na tela e clique em 'Confirmar' para finalizar a votaçao.")
+            self.isVoteValid.emit(True)
+            self.sendChapa.emit("Use os botoes ao lado para escolhera chapa. \n\n Observe se a chapa selecionada esta sendo exibida na tela e clique em 'Confirmar' para finalizar a votaçao.")
+        else:
+            self.isVoteValid.emit(False)
+            self.sendChapa.emit("Escolha uma chapa antes de confirmar seu voto.")
 
     @Slot()
     def getChapaLove(self):
